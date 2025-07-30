@@ -5,14 +5,36 @@ void	free_arr(char **arr)
 	int	i;
 
 	if (!arr)
-		return;
+		return ;
 	i = 0;
-	while (arr[i] != NULL)
+	while (arr[i])
 	{
 		free(arr[i]);
 		i++;
 	}
 	free(arr);
+}
+
+int	file_open(char *file, int io_flag)
+{
+	int	fd;
+
+	if (io_flag == 0)
+	{
+		fd = open(file, O_RDONLY, 0777);
+		if (fd == -1)
+				error_exit("Cannot open fd");
+		return (fd);
+	}
+	else if (io_flag == 1)
+	{
+		fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+		if (fd == -1)
+			error_exit("Cannot open fd");
+		return (fd);
+	}
+	error_exit("Invalid fd");
+	return (-1);
 }
 
 char *get_path(char *cmd, char **envp)

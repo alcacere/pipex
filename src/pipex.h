@@ -18,6 +18,6 @@ void	free_arr(char **arr);
 void	execute_cmd(char *cmd, char **envp);
 void	error_exit(char *msg);
 void	cmd_not_found(char *cmd);
-
+int	file_open(char *file, int io_flag);
 #endif // !"PIPEX_H"
 
