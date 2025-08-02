@@ -1,15 +1,20 @@
 #include "pipex.h"
 
-void error_exit(char *msg)
+void	close_pipe(int *pipe_fd)
 {
-	perror(msg);
-	exit(EXIT_FAILURE);
+	close(pipe_fd[0]);
+	close(pipe_fd[1]);
 }
 
-void cmd_not_found(char *cmd)
+void	error_exit(void)
 {
-	ft_putstr_fd("pipex: command not found: ", 2);
+	perror("");
+	exit(1);
+}
+
+void	cmd_not_found(char *cmd)
+{
 	ft_putstr_fd(cmd, 2);
-	ft_putstr_fd("\n", 2);
+	ft_putstr_fd(": Command not found\n", 2);
 	exit(127);
 }

@@ -19,37 +19,32 @@ int	file_open(char *file, int io_flag)
 {
 	int	fd;
 
+	if (!file)
+		return (-1);
 	if (io_flag == 0)
 	{
-		fd = open(file, O_RDONLY, 0777);
+		fd = open(file, O_RDONLY);
 		if (fd == -1)
-				error_exit("Cannot open fd");
+			return (-1);
 		return (fd);
 	}
 	else if (io_flag == 1)
 	{
 		fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
 		if (fd == -1)
-			error_exit("Cannot open fd");
+			return (-1);
 		return (fd);
 	}
-	error_exit("Invalid fd");
+	error_exit();
 	return (-1);
 }
 
-char *get_path(char *cmd, char **envp)
+char	*find_path(char **full_path, char *cmd)
 {
-	char **full_path;
-	char *cmd_path;
-	char *tmp;
-	int i;
+	int		i;
+	char	*cmd_path;
+	char	*tmp;
 
-	i = 0;
-	while (envp[i] && ft_strncmp(envp[i], "PATH=", 5) != 0)
-		i++;
-	if (!envp[i])
-		return (NULL);
-	full_path = ft_split(envp[i] + 5, ':');
 	i = 0;
 	while (full_path[i])
 	{
@@ -57,37 +52,57 @@ char *get_path(char *cmd, char **envp)
 		cmd_path = ft_strjoin(tmp, cmd);
 		free(tmp);
 		if (access(cmd_path, F_OK | X_OK) == 0)
-			return (free_arr(full_path), cmd_path);
+			return (cmd_path);
 		free(cmd_path);
 		i++;
 	}
-	free_arr(full_path);
 	return (NULL);
+}
+
+char	*get_path(char *cmd, char **envp)
+{
+	char	**full_path;
+	char	*cmd_path;
+	int		i;
+
+	i = 0;
+	if (ft_strchr(cmd, '/'))
+	{
+		if (access(cmd, X_OK) == 0)
+			return (ft_strdup(cmd));
+		return (NULL);
+	}
+	while (envp[i] && ft_strncmp(envp[i], "PATH=", 5) != 0)
+		i++;
+	if (!envp[i])
+		return (NULL);
+	full_path = ft_split(envp[i] + 5, ':');
+	cmd_path = find_path(full_path, cmd);
+	free_arr(full_path);
+	return (cmd_path);
 }
 
 void	execute_cmd(char *cmd, char **envp)
 {
-	char **cmd_args;
-	char *cmd_path;
+	char	**cmd_args;
+	char	*cmd_path;
 
 	cmd_args = ft_split(cmd, ' ');
 	if (!cmd_args || !cmd_args[0])
-		error_exit("command parsing failed");
+	{
+		free_arr(cmd_args);
+		error_exit();
+	}
 	cmd_path = get_path(cmd_args[0], envp);
 	if (!cmd_path)
 	{
 		free_arr(cmd_args);
 		cmd_not_found(cmd);
 	}
-	execve(cmd_path, cmd_args, envp);
-	free_arr(cmd_args);
-	free(cmd_path);
+	if (execve(cmd_path, cmd_args, envp) == -1)
+	{
+		free_arr(cmd_args);
+		free(cmd_path);
+		error_exit();
+	}
 }
-
-//int main (int ac, char **av, char **envp)
-//{
-//	if (ac == 2)
-//	{
-//		execute_cmd(av[1], envp);
-//	}
-//}
