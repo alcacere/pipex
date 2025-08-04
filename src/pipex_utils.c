@@ -1,20 +1,5 @@
 #include "pipex.h"
 
-void	free_arr(char **arr)
-{
-	int	i;
-
-	if (!arr)
-		return ;
-	i = 0;
-	while (arr[i])
-	{
-		free(arr[i]);
-		i++;
-	}
-	free(arr);
-}
-
 int	file_open(char *file, int io_flag)
 {
 	int	fd;
@@ -24,18 +9,13 @@ int	file_open(char *file, int io_flag)
 	if (io_flag == 0)
 	{
 		fd = open(file, O_RDONLY);
-		if (fd == -1)
-			return (-1);
 		return (fd);
 	}
 	else if (io_flag == 1)
 	{
-		fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-		if (fd == -1)
-			return (-1);
+		fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		return (fd);
 	}
-	error_exit();
 	return (-1);
 }
 

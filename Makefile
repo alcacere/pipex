@@ -6,10 +6,7 @@ CFLAGS = -Werror -Wall -Wextra -g3
 
 RM = rm -rf
 
-SRCS = 	src/pipex.c\
-		src/pipex_utils.c\
-		src/pipex_error.c\
-		libft/libft.a\
+SRCS = 	src/pipex.c src/pipex_utils.c src/pipex_error.c libft/libft.a
 
 $(NAME) :
 	make all -C libft
@@ -27,3 +24,5 @@ clean :
 	make clean -C libft
 
 re : fclean all
+
+.PHONY: all clean fclean re

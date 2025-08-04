@@ -8,7 +8,6 @@
 # include "../libft/libft.h"
 
 char	*get_path(char *cmd, char **envp);
-char	*get_path(char *cmd, char **envp);
 void	free_arr(char **arr);
 void	execute_cmd(char *cmd, char **envp);
 void	error_exit(void);

@@ -1,65 +1,46 @@
 #include "pipex.h"
 
-void	first_child(char **envp, char **av, int *pipe_fd)
+void	close_pipe(int *pipe_fd)
 {
-	int	fd;
-
-	fd = file_open(av[1], 0);
-	if (fd == -1)
-	{
-		close_pipe(pipe_fd);
-		error_exit();
-	}
-	if (dup2(fd, STDIN_FILENO) == -1)
-	{
-		close_pipe(pipe_fd);
-		close(fd);
-		error_exit();
-	}
-	if (dup2(pipe_fd[1], STDOUT_FILENO) == -1)
-	{
-		close_pipe(pipe_fd);
-		close(fd);
-		error_exit();
-	}
-	close_pipe(pipe_fd);
-	close(fd);
-	execute_cmd(av[2], envp);
+	close(pipe_fd[0]);
+	close(pipe_fd[1]);
 }
 
-void	second_child(char **envp, char **av, int *pipe_fd)
+void	child_process(char **av, char **envp, int *pipe_fd, int io_flag)
 {
-	int	fd;
+	int	fd_in;
+	int	fd_out;
 
-	fd = file_open(av[4], 1);
-	if (fd == -1)
+	if (io_flag == 0)
 	{
+		fd_in = file_open(av[1], io_flag);
+		if (dup2(fd_in, STDIN_FILENO) == -1)
+			error_exit();
+		if (dup2(pipe_fd[1], STDOUT_FILENO) == -1)
+			error_exit();
+		close(fd_in);
 		close_pipe(pipe_fd);
-		error_exit();
+		execute_cmd(av[2], envp);
 	}
-	if (dup2(pipe_fd[0], STDIN_FILENO) == -1)
+	if (io_flag == 1)
 	{
+		fd_out = file_open(av[4], io_flag);
+		if (dup2(pipe_fd[0], STDIN_FILENO) == -1)
+			error_exit();
+		if (dup2(fd_out, STDOUT_FILENO) == -1)
+			error_exit();
+		close(fd_out);
 		close_pipe(pipe_fd);
-		close(fd);
-		error_exit();
+		execute_cmd(av[3], envp);
 	}
-	if (dup2(fd, STDOUT_FILENO) == -1)
-	{
-		close_pipe(pipe_fd);
-		close(fd);
-		error_exit();
-	}
-	close_pipe(pipe_fd);
-	close(fd);
-	execute_cmd(av[3], envp);
 }
 
 int	main(int ac, char **av, char **envp)
 {
-	int	pipe_fd[2];
-	int	pid1;
-	int	pid2;
-	int	status;
+	pid_t	pid1;
+	pid_t	pid2;
+	int		pipe_fd[2];
+	int		status;
 
 	if (ac != 5)
 		return (ft_putstr_fd("Usage: ./pipex infile cmd cmd outfile\n", 2), 1);
@@ -69,14 +50,16 @@ int	main(int ac, char **av, char **envp)
 	if (pid1 == -1)
 		error_exit();
 	else if (pid1 == 0)
-		first_child(envp, av, pipe_fd);
+		child_process(av, envp, pipe_fd, 0);
 	pid2 = fork();
 	if (pid2 == -1)
 		error_exit();
-	if (pid2 == 0)
-		second_child(envp, av, pipe_fd);
+	else if (pid2 == 0)
+		child_process(av, envp, pipe_fd, 1);
 	close_pipe(pipe_fd);
 	waitpid(pid1, NULL, 0);
 	waitpid(pid2, &status, 0);
-	return (status);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	return (1);
 }

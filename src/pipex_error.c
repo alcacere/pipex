@@ -1,9 +1,18 @@
 #include "pipex.h"
 
-void	close_pipe(int *pipe_fd)
+void	free_arr(char **arr)
 {
-	close(pipe_fd[0]);
-	close(pipe_fd[1]);
+	int	i;
+
+	if (!arr)
+		return ;
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
 }
 
 void	error_exit(void)
