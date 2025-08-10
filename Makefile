@@ -1,28 +1,38 @@
 NAME = pipex
 
 CC = cc
-
 CFLAGS = -Werror -Wall -Wextra -g3
 
-RM = rm -rf
+RM = rm -f
 
-SRCS = 	src/pipex.c src/pipex_utils.c src/pipex_error.c libft/libft.a
+LIBFT_PATH = ./libft
+LIBFT = $(LIBFT_PATH)/libft.a
 
-$(NAME) :
-	make all -C libft
-	gcc $(CFLAGS) $(SRCS) -o $(NAME)
+SRCS = 	src/pipex.c \
+		src/pipex_utils.c \
+		src/pipex_error.c
 
+OBJS = $(SRCS:.c=.o)
 
-all : $(NAME)
+all: $(LIBFT) $(NAME)
 
-fclean : clean
+$(LIBFT):
+	$(MAKE) -C $(LIBFT_PATH)
+
+$(NAME): $(OBJS) $(LIBFT)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJS) $(LIBFT)
+
+%.o:%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	$(RM) $(OBJS)
+	$(MAKE) clean -C $(LIBFT_PATH)
+
+fclean: clean
 	$(RM) $(NAME)
-	make fclean -C libft
+	$(MAKE) fclean -C $(LIBFT_PATH)
 
-clean :
-	$(RM) $(NAME)
-	make clean -C libft
-
-re : fclean all
+re: fclean all
 
 .PHONY: all clean fclean re
