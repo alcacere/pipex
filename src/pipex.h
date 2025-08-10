@@ -16,4 +16,5 @@ void	free_arr(char **arr);
 void	error_exit(char *msg);
 void	cmd_not_found(char *cmd);
 void	close_all_fds(int *fds);
+
 #endif
