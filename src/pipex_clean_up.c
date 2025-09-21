@@ -1,11 +1,11 @@
 #include "pipex.h"
 
-void	close_all_fds(int *fds)
+void	close_all_fds(t_fds fds)
 {
-	close(fds[0]);
-	close(fds[1]);
-	close(fds[2]);
-	close(fds[3]);
+	close(fds.pipes[0]);
+	close(fds.pipes[1]);
+	close(fds.infile);
+	close(fds.outfile);
 }
 
 void	free_arr(char **arr)

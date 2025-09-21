@@ -71,3 +71,15 @@ void	execute_cmd(char *cmd, char **envp)
 		error_exit("execve failed");
 	}
 }
+
+void	wait_children(int num_cmds)
+{
+	int i;
+
+	i = 0;
+	while (i < num_cmds)
+	{
+		wait(NULL);
+		i++;
+	}
+}

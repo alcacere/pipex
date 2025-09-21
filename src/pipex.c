@@ -1,56 +1,100 @@
 #include "pipex.h"
 
-void	child_process(char *cmd, char **envp, int *fds, int io_flags)
+void init_fds(t_fds *fds, int ac, char **av, int here_doc)
 {
-	if (io_flags == fds[0])
+	if (here_doc)
 	{
-		dup2(fds[2], STDIN_FILENO);
-		dup2(fds[1], STDOUT_FILENO);
+		fds->outfile = open(av[ac - 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
+		fds->infile = 0;
+		fds->num_cmds = ac - 4;
+		fds->args = av + 3;
 	}
 	else
 	{
-		dup2(fds[0], STDIN_FILENO);
-		dup2(fds[3], STDOUT_FILENO);
+		fds->outfile = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		fds->infile = open(av[1], O_RDONLY);
+		fds->num_cmds = ac - 3;
+		fds->args = av + 2;
 	}
-	close_all_fds(fds);
+	fds->pipes[0] = 0;
+	fds->pipes[1] = 0;
+	fds->pid = -1;
+	fds->last_cmd = 0;
+}
+
+void	child_process(char *cmd, char **envp, t_fds fds)
+{
+	close(fds.pipes[0]);
+	if (fds.last_cmd == 1)
+	{
+		if (dup2(fds.outfile, STDOUT_FILENO) == -1)
+			error_exit("dup2 failed in child");
+	}
+	else
+	{
+		if (dup2(fds.pipes[1], STDOUT_FILENO) == -1)
+			error_exit("dup2 failed in child");
+	}
+	close(fds.infile);
+	close(fds.outfile);
+	close(fds.pipes[1]);
 	execute_cmd(cmd, envp);
 }
 
-static void	run_pipex(char **av, char **envp)
+static void	create_pipeline(char **envp, t_fds fds)
 {
-	int	fds[4];
-	int	pids[2];
+	int i;
 
-	fds[2] = open(av[1], O_RDONLY);
-	if (fds[2] == -1)
-		error_exit("Infile open failed");
-	fds[3] = open(av[4], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (fds[3] == -1)
-		error_exit("Outfile open failed");
-	if (pipe(fds) == -1)
-		error_exit("Pipe creation failed");
-	pids[0] = fork();
-	if (pids[0] == -1)
-		error_exit("Fork failed");
-	if (pids[0] == 0)
-		child_process(av[2], envp, fds, fds[0]);
-	pids[1] = fork();
-	if (pids[1] == -1)
-		error_exit("Fork failed");
-	if (pids[1] == 0)
-		child_process(av[3], envp, fds, fds[1]);
-	close_all_fds(fds);
-	waitpid(pids[0], NULL, 0);
-	waitpid(pids[1], NULL, 0);
+	i = 0;
+	dup2(fds.infile, STDIN_FILENO);
+	close(fds.infile);
+	while (i <= fds.num_cmds - 1)
+	{
+		if (i == fds.num_cmds - 1)
+			fds.last_cmd = 1;
+		if (pipe(fds.pipes) == -1)
+			error_exit("pipe failed");
+		fds.pid = fork();
+		if (fds.pid == -1)
+			error_exit("fork failed");
+		if (fds.pid == 0)
+			 child_process(fds.args[i], envp, fds);
+		else
+		{
+			close(fds.pipes[1]);
+			dup2(fds.pipes[0], STDIN_FILENO);
+			close(fds.pipes[0]);
+		}
+		i++;
+	}
+	close(fds.outfile);
+}
+
+
+void	do_pipe(char **envp, t_fds fds)
+{
+	create_pipeline(envp, fds);
+	wait_children(fds.num_cmds);
 }
 
 int main (int ac, char **av, char **envp)
 {
-	if (ac != 5)
+	t_fds fds;
+	char *here_delimiter;
+
+	if (ac < 5)
+		error_exit("too few arguments");
+	if (ft_strcmp(av[1], "heredoc") == 0)
 	{
-		ft_putstr_fd("Usage: ./pipex infile cmd1 cmd2 outfile\n", 2);
-		return (1);
+		here_delimiter = ft_strjoin(av[2], "\n");
+		init_fds(&fds, ac, av, 1);
+		do_pipe_here_doc(here_delimiter ,envp, fds);
+		return (EXIT_SUCCESS);
 	}
-	run_pipex(av, envp);
-	return (0);
+	else
+	{
+		init_fds(&fds, ac, av, 0);
+		do_pipe(envp, fds);
+		return (EXIT_SUCCESS);
+	}
 }
