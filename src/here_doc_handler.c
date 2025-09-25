@@ -32,12 +32,20 @@ void	child_heredoc(char *cmd, char **envp, t_fds fds)
 	if (fds.last_cmd == 1)
 	{
 		if (dup2(fds.outfile, STDOUT_FILENO) == -1)
+		{
+			close(fds.outfile);
+			close(fds.pipes[1]);
 			error_exit("dup2 failed in child");
+		}
 	}
 	else
 	{
 		if (dup2(fds.pipes[1], STDOUT_FILENO) == -1)
+		{
+			close(fds.outfile);
+			close(fds.pipes[1]);
 			error_exit("dup2 failed in child");
+		}
 	}
 	close(fds.outfile);
 	close(fds.pipes[1]);

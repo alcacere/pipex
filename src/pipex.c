@@ -5,6 +5,8 @@ void init_fds(t_fds *fds, int ac, char **av, int here_doc)
 	if (here_doc)
 	{
 		fds->outfile = open(av[ac - 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
+		if (fds->outfile == -1)
+			error_exit("open failed in init");
 		fds->infile = 0;
 		fds->num_cmds = ac - 4;
 		fds->args = av + 3;
@@ -13,6 +15,8 @@ void init_fds(t_fds *fds, int ac, char **av, int here_doc)
 	{
 		fds->outfile = open(av[ac - 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		fds->infile = open(av[1], O_RDONLY);
+		if (fds->outfile == -1 || fds->infile == -1)
+			error_exit("open failed in init");
 		fds->num_cmds = ac - 3;
 		fds->args = av + 2;
 	}
@@ -28,12 +32,22 @@ void	child_process(char *cmd, char **envp, t_fds fds)
 	if (fds.last_cmd == 1)
 	{
 		if (dup2(fds.outfile, STDOUT_FILENO) == -1)
+		{
+			close(fds.infile);
+			close(fds.outfile);
+			close(fds.pipes[1]);
 			error_exit("dup2 failed in child");
+		}
 	}
 	else
 	{
 		if (dup2(fds.pipes[1], STDOUT_FILENO) == -1)
+		{
+			close(fds.infile);
+			close(fds.outfile);
+			close(fds.pipes[1]);
 			error_exit("dup2 failed in child");
+		}
 	}
 	close(fds.infile);
 	close(fds.outfile);
@@ -58,7 +72,7 @@ static void	create_pipeline(char **envp, t_fds fds)
 		if (fds.pid == -1)
 			error_exit("fork failed");
 		if (fds.pid == 0)
-			 child_process(fds.args[i], envp, fds);
+			child_process(fds.args[i], envp, fds);
 		else
 		{
 			close(fds.pipes[1]);
