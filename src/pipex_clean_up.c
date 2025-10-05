@@ -1,13 +1,5 @@
 #include "pipex.h"
 
-void	close_all_fds(t_fds fds)
-{
-	close(fds.pipes[0]);
-	close(fds.pipes[1]);
-	close(fds.infile);
-	close(fds.outfile);
-}
-
 void	free_arr(char **arr)
 {
 	int	i;
@@ -40,4 +32,19 @@ void	cmd_not_found(char *cmd)
 	free_arr(command);
 	ft_putstr_fd(": Command not found\n", 2);
 	exit(127);
+}
+
+int	get_exit_status(pid_t last_pid)
+{
+	int	status;
+	int	exit_code;
+
+	waitpid(last_pid, &status, 0);
+	if (WIFEXITED(status))
+		exit_code = WEXITSTATUS(status);
+	else
+		exit_code = 1;
+	while (wait(NULL) != -1)
+		;
+	return (exit_code);
 }

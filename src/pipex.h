@@ -27,7 +27,7 @@ void	free_arr(char **arr);
 void	wait_children(int num_cmds);
 void	error_exit(char *msg);
 void	cmd_not_found(char *cmd);
-void	close_all_fds(t_fds fds);
-void	do_pipe_here_doc(char *here_delimiter, char **envp, t_fds fds);
+void	set_heredoc_infile(t_fds *fds, char *here_delimiter);
+int		get_exit_status(pid_t last_pid);
 
 #endif
