@@ -1,13 +1,24 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipex_utils.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: alcacere <alcacere@student.42madrid.c      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/06 03:36:38 by alcacere          #+#    #+#             */
+/*   Updated: 2025/10/06 03:37:44 by alcacere         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 #include "pipex.h"
 
 char	*find_path(char *cmd, char **envp)
 {
-	int	i;
+	int		i;
 	char	*cmd_path;
 	char	*tmp;
 
 	i = 0;
-	while(envp[i])
+	while (envp[i])
 	{
 		tmp = ft_strjoin(envp[i], "/");
 		cmd_path = ft_strjoin(tmp, cmd);
@@ -25,7 +36,7 @@ char	**get_env_path(char **envp)
 	int	i;
 
 	i = 0;
-	while(envp[i] && ft_strncmp(envp[i], "PATH=", 5) != 0)
+	while (envp[i] && ft_strncmp(envp[i], "PATH=", 5) != 0)
 		i++;
 	if (!envp)
 		return (NULL);

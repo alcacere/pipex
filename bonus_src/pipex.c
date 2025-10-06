@@ -1,13 +1,24 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipex.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: alcacere <alcacere@student.42madrid.c      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/06 03:15:02 by alcacere          #+#    #+#             */
+/*   Updated: 2025/10/06 03:30:04 by alcacere         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 #include "pipex.h"
 
-static void	init_common_fds(t_fds *fds)
-{
-	fds->pipes[0] = 0;
-	fds->pipes[1] = 0;
-	fds->pid = -1;
-	fds->last_cmd = 0;
-}
-
+//static void	init_common_fds(t_fds *fds)
+//{
+//	fds->pipes[0] = 0;
+//	fds->pipes[1] = 0;
+//	fds->pid = -1;
+//	fds->last_cmd = 0;
+//}
+//
 static void	init_fds(t_fds *fds, int ac, char **av, int here_doc)
 {
 	if (here_doc)
@@ -16,6 +27,7 @@ static void	init_fds(t_fds *fds, int ac, char **av, int here_doc)
 		fds->infile = 0;
 		fds->num_cmds = ac - 4;
 		fds->args = av + 3;
+		fds->pid = -1;
 	}
 	else
 	{
@@ -23,10 +35,10 @@ static void	init_fds(t_fds *fds, int ac, char **av, int here_doc)
 		fds->infile = open(av[1], O_RDONLY);
 		fds->num_cmds = ac - 3;
 		fds->args = av + 2;
+		fds->pid = -1;
 	}
 	if (fds->outfile == -1 || fds->infile == -1)
 		error_exit("open failed");
-	init_common_fds(fds);
 }
 
 static void	child_routine(char *cmd, char **envp, t_fds fds)
@@ -43,6 +55,14 @@ static void	child_routine(char *cmd, char **envp, t_fds fds)
 	close(fds.outfile);
 	close(fds.pipes[1]);
 	execute_cmd(cmd, envp);
+}
+
+static void	parent_routine(t_fds *fds)
+{
+	close(fds->pipes[1]);
+	if (dup2(fds->pipes[0], STDIN_FILENO) == -1)
+		error_exit("dup2 failed in parent routine");
+	close(fds->pipes[0]);
 }
 
 static pid_t	create_pipeline(char **envp, t_fds *fds, int is_heredoc)
@@ -67,20 +87,16 @@ static pid_t	create_pipeline(char **envp, t_fds *fds, int is_heredoc)
 		else if (fds->pid == 0)
 			child_routine(fds->args[i], envp, *fds);
 		else
-		{
-			close(fds->pipes[1]);
-			dup2(fds->pipes[0], STDIN_FILENO);
-			close(fds->pipes[0]);
-		}
+			parent_routine(&fds);
 		i++;
 	}
 	return (fds->pid);
 }
 
-int main (int ac, char **av, char **envp)
+int	main(int ac, char **av, char **envp)
 {
-	t_fds fds;
-	char *here_delimiter;
+	t_fds	fds;
+	char	*here_delimiter;
 	pid_t	last_pid;
 
 	if (ac < 5)
