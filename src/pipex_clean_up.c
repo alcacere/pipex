@@ -3,13 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   pipex_clean_up.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: alcacere <alcacere@student.42madrid.c      +#+  +:+       +#+        */
+/*   By: alcacere <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/06 03:35:21 by alcacere          #+#    #+#             */
-/*   Updated: 2025/10/06 03:35:24 by alcacere         ###   ########.fr       */
+/*   Created: 2025/08/14 02:46:44 by alcacere          #+#    #+#             */
+/*   Updated: 2025/08/14 02:46:46 by alcacere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "pipex.h"
+
+void	close_all_fds(int *fds)
+{
+	close(fds[0]);
+	close(fds[1]);
+	close(fds[2]);
+	close(fds[3]);
+}
 
 void	free_arr(char **arr)
 {
@@ -43,19 +52,4 @@ void	cmd_not_found(char *cmd)
 	free_arr(command);
 	ft_putstr_fd(": Command not found\n", 2);
 	exit(127);
-}
-
-int	get_exit_status(pid_t last_pid)
-{
-	int	status;
-	int	exit_code;
-
-	waitpid(last_pid, &status, 0);
-	if (WIFEXITED(status))
-		exit_code = WEXITSTATUS(status);
-	else
-		exit_code = 1;
-	while (wait(NULL) != -1)
-		;
-	return (exit_code);
 }

@@ -9,7 +9,7 @@
 /*   Updated: 2025/10/06 03:36:23 by alcacere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "pipex.h"
+#include "pipex_bonus.h"
 
 void	set_heredoc_infile(t_fds *fds, char *here_delimiter)
 {

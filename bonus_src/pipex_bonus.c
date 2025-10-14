@@ -9,16 +9,8 @@
 /*   Updated: 2025/10/06 03:30:04 by alcacere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "pipex.h"
+#include "pipex_bonus.h"
 
-//static void	init_common_fds(t_fds *fds)
-//{
-//	fds->pipes[0] = 0;
-//	fds->pipes[1] = 0;
-//	fds->pid = -1;
-//	fds->last_cmd = 0;
-//}
-//
 static void	init_fds(t_fds *fds, int ac, char **av, int here_doc)
 {
 	if (here_doc)
@@ -87,7 +79,7 @@ static pid_t	create_pipeline(char **envp, t_fds *fds, int is_heredoc)
 		else if (fds->pid == 0)
 			child_routine(fds->args[i], envp, *fds);
 		else
-			parent_routine(&fds);
+			parent_routine(fds);
 		i++;
 	}
 	return (fds->pid);
